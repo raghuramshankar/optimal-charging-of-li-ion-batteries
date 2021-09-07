@@ -33,7 +33,7 @@ for model in models:
     pybamm.dynamic_plot(sim)
     solutions.append(sim.solution)
 
-"""save solutions"""
-for sol in solutions:
-    sol.save('sim_dfn.pkl')
-    sol.save_data('sim_dfn.csv', ['Current [A]', 'Terminal voltage [V]'], to_format='csv')
+# """save solutions"""
+# for sol in solutions:
+#     sol.save('sim_dfn.pkl')
+#     sol.save_data('sim_dfn.csv', ['Current [A]', 'Terminal voltage [V]'], to_format='csv')
