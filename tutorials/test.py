@@ -3,9 +3,12 @@ import pandas as pd
 import numpy as np
 
 """current profile"""
+
+
 def my_current(t):
     # return pybamm.sin(2 * np.pi * t / 60)
     return 0.5
+
 
 # drive_cycle = pd.read_csv("tutorials/input/UDDS.csv", comment="#", header=None).to_numpy()
 
@@ -20,7 +23,7 @@ params = pybamm.ParameterValues(chemistry=chem)
 
 """solvers"""
 # sol = pybamm.CasadiSolver(atol=1e-9, rtol=1e-9, mode='safe')
-sol = pybamm.JaxSolver(method='RK45', atol=1e-9, rtol=1e-9)
+sol = pybamm.JaxSolver(method="RK45", atol=1e-9, rtol=1e-9)
 
 """simulate cell"""
 sims = []
@@ -32,7 +35,7 @@ for model in models:
     # params['Current function [A]'] = my_current
     # params['Lower voltage cut-off [V]'] = 3.0
     model.events = []
-    model.convert_to_format = 'jax'
+    model.convert_to_format = "jax"
 
     sim = pybamm.Simulation(model, parameter_values=params, solver=sol)
     t_eval = np.arange(0, 360, 0.1)
@@ -42,6 +45,11 @@ for model in models:
     sims.append(sim)
 
 """plot results"""
-output_variables = ["Electrolyte concentration [mol.m-3]", "Terminal voltage [V]", 'Positive electrode potential [V]', 'Negative electrode potential [V]']
+output_variables = [
+    "Electrolyte concentration [mol.m-3]",
+    "Terminal voltage [V]",
+    "Positive electrode potential [V]",
+    "Negative electrode potential [V]",
+]
 # sim.plot(output_variables=output_variables)
 pybamm.dynamic_plot(sims)
