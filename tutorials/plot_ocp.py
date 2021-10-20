@@ -1,5 +1,5 @@
-import pybamm
 import matplotlib.pyplot as plt
+import pybamm
 
 chemistry = pybamm.parameter_sets.Chen2020
 parameter_values = pybamm.ParameterValues(chemistry=chemistry)
