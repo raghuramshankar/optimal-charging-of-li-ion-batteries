@@ -1,7 +1,7 @@
-import jax.numpy as jnp
 import timeit
-from jax import grad, jit, vmap
-from jax import random
+
+import jax.numpy as jnp
+from jax import jit, random
 
 size = 5000
 key = random.PRNGKey(0)
