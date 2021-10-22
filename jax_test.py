@@ -19,7 +19,7 @@ multi_jit = jit(multi)
 def run():
     # y = multi_jit(x).block_until_ready()
     y = multi(x).block_until_ready()
-    # print(y)
+    print(y)
 
 
 t = timeit.timeit(stmt=run, number=100)
