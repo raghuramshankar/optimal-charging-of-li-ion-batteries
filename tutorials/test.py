@@ -7,7 +7,7 @@ import pybamm
 
 def my_current(t):
     # return pybamm.sin(2 * np.pi * t / 60)
-    return 0.5
+    return 10.0
 
 
 # drive_cycle = pd.read_csv("tutorials/input/UDDS.csv", comment="#", header=None).to_numpy()
@@ -22,8 +22,8 @@ chem = pybamm.parameter_sets.Chen2020
 params = pybamm.ParameterValues(chemistry=chem)
 
 """solvers"""
-# sol = pybamm.CasadiSolver(atol=1e-9, rtol=1e-9, mode='safe')
-sol = pybamm.JaxSolver(method="RK45", atol=1e-9, rtol=1e-9)
+sol = pybamm.CasadiSolver(atol=1e-9, rtol=1e-9, mode='safe')
+# sol = pybamm.JaxSolver(method="RK45", atol=1e-9, rtol=1e-9)
 
 """simulate cell"""
 sims = []
@@ -32,13 +32,13 @@ for model in models:
     timescale = params.evaluate(model.timescale)
     # current_interpolant = pybamm.Interpolant(drive_cycle[:, 0], drive_cycle[:, 1], timescale * pybamm.t)
     # params['Current function [A]'] = current_interpolant
-    # params['Current function [A]'] = my_current
-    # params['Lower voltage cut-off [V]'] = 3.0
-    model.events = []
-    model.convert_to_format = "jax"
+    params['Current function [A]'] = my_current
+    params['Lower voltage cut-off [V]'] = 3.0
+    # model.events = []
+    # model.convert_to_format = "jax"
 
     sim = pybamm.Simulation(model, parameter_values=params, solver=sol)
-    t_eval = np.arange(0, 360, 0.1)
+    t_eval = np.arange(0, 3600, 0.1)
     # sim.solve([0, 3600])
     sim.solve(t_eval=t_eval)
     # sim.solve()
