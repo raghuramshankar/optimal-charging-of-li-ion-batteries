@@ -58,6 +58,7 @@ output_variables = [
     "Terminal voltage [V]",
     "Positive electrode potential [V]",
     "Negative electrode potential [V]",
+
 ]
 # sim.plot(output_variables=output_variables)
 pybamm.dynamic_plot(sims)
