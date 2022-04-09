@@ -1,6 +1,4 @@
-#
-# Constant-current constant-voltage charge
-#
+import numpy as np
 import pybamm
 import matplotlib.pyplot as plt
 
@@ -8,18 +6,19 @@ pybamm.set_logging_level("NOTICE")
 experiment = pybamm.Experiment(
     [
         (
-            "Discharge at C/5 for 10 hours or until 3.3 V",
+            "Discharge at C/5 for 10 hours or until 2.5V",
             "Rest for 1 hour",
-            "Charge at 1 A until 4.1 V",
-            "Hold at 4.1 V until 10 mA",
+            "Charge at 1 A until 4.2 V",
+            "Hold at 4.2 V until 10 mA",
             "Rest for 1 hour",
         ),
     ]
 )
 model = pybamm.lithium_ion.DFN()
+params = pybamm.ParameterValues("Chen2020")
 
 sim = pybamm.Simulation(
-    model, experiment=experiment, solver=pybamm.CasadiSolver(
+    model, experiment=experiment, parameter_values=params, solver=pybamm.CasadiSolver(
         "fast with events")
 )
 sim.solve()
@@ -44,7 +43,7 @@ sim.solve()
 output_variables = [
     "Current [A]",
     "Terminal voltage [V]",
-    "X-averaged negative particle concentration [mol.m-3]",
+    "X-averaged positive particle concentration [mol.m-3]",
 ]
 
 # Plot OCV
@@ -53,7 +52,40 @@ posOCP = sim.solution["Positive electrode potential [V]"].data[1, :]
 negOCP = sim.solution["Negative electrode potential [V]"].data[1, :]
 cellOCV = posOCP - negOCP
 
-plt.plot(cellOCV)
+# Plot cell capacity
+disCap = sim.solution["Discharge capacity [A.h]"].data
+negCap = sim.solution["Negative electrode capacity [A.h]"].data
+posCap = sim.solution["Positive electrode capacity [A.h]"].data
+cellCap = min(negCap[0], posCap[0])
+print(cellCap)
+
+# Plot SOC
+posConcAvg = sim.solution["X-averaged positive particle concentration [mol.m-3]"].data
+posConcAvg = [np.mean(posConcAvg[:, i])
+              for i in range(np.shape(posConcAvg)[1])]
+negConcAvg = sim.solution["X-averaged negative particle concentration [mol.m-3]"].data
+negConcAvg = [np.mean(negConcAvg[:, i])
+              for i in range(np.shape(negConcAvg)[1])]
+
+posConcMax = params["Maximum concentration in positive electrode [mol.m-3]"]
+negConcMax = params["Maximum concentration in negative electrode [mol.m-3]"]
+
+# csavg/csmax
+posConc = np.divide(posConcAvg, posConcMax)
+negConc = np.divide(negConcAvg, negConcMax)
+
+# x0, x100, y0, y100
+posStoicHundred = min(posConc)
+negStoicHundred = max(negConc)
+posStoicZero = max(posConc)
+negStoicZero = min(negConc)
+
+# socpos = (csavgpos/csmaxpos - y0)/(y100 - y0)
+cellSOCPos = (posConc - posStoicZero)/(posStoicHundred - posStoicZero)
+# socneg = (csavgneg/csmaxneg - x0)/(x100 - x0)
+cellSOCNeg = (negConc - negStoicZero)/(negStoicHundred - negStoicZero)
+
+plt.plot(cellSOCNeg)
 plt.show()
 
 # sim.solution.save_data("output.csv", output_variables, to_format="csv")
