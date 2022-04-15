@@ -6,15 +6,23 @@ pybamm.set_logging_level("NOTICE")
 experiment = pybamm.Experiment(
     [
         (
-            "Discharge at C/5 for 10 hours or until 2.5V",
+            "Discharge at C/5 for 10 hours or until 2.5 V",
             "Rest for 1 hour",
             "Charge at 1 A until 4.2 V",
             "Hold at 4.2 V until 10 mA",
             "Rest for 1 hour",
         ),
-    ]
+    ]*10
 )
-model = pybamm.lithium_ion.DFN()
+model = pybamm.lithium_ion.SPM(
+    {
+        # "SEI": "ec reaction limited",
+        # "SEI film resistance": "distributed",
+        # "SEI porosity change": "true",
+        # "lithium plating": "irreversible",
+        # "lithium plating porosity change": "true",
+    }
+)
 params = pybamm.ParameterValues("Chen2020")
 
 sim = pybamm.Simulation(
@@ -23,27 +31,12 @@ sim = pybamm.Simulation(
 )
 sim.solve()
 
-# Plot SOX
-# fig, ax = plt.subplots()
-# for i in range(3):
-#     # Extract sub solutions
-#     sol = sim.solution.cycles[i]
-#     # Extract variables
-#     t = sol["Time [h]"].entries
-#     V = sol["Terminal voltage [V]"].entries
-
-#     # Plot
-#     ax.plot(t - t[0], V, label="Discharge {}".format(i + 1))
-#     ax.set_xlabel("Time [h]")
-#     ax.set_ylabel("Voltage [V]")
-#     ax.set_xlim([0, 10])
-# ax.legend(loc="lower left")
-
 # Show all plots
 output_variables = [
     "Current [A]",
     "Terminal voltage [V]",
     "X-averaged positive particle concentration [mol.m-3]",
+    "Discharge capacity [A.h]"
 ]
 
 # Plot OCV
@@ -85,10 +78,16 @@ cellSOCPos = (posConc - posStoicZero)/(posStoicHundred - posStoicZero)
 # socneg = (csavgneg/csmaxneg - x0)/(x100 - x0)
 cellSOCNeg = (negConc - negStoicZero)/(negStoicHundred - negStoicZero)
 
-plt.plot(cellSOCNeg)
-plt.show()
+# socneg = (csavgneg - csminneg)/(csmaxneg - csminneg)
+# for Chen2020
+negConcMax = 29866
+negConcMin = 995
+socneg = np.subtract(negConcAvg, negConcMin)/(negConcMax - negConcMin)
 
-# sim.solution.save_data("output.csv", output_variables, to_format="csv")
-# sim.plot(output_variables=output_variables)
+plt.plot(socneg)
+plt.grid(True)
+# plt.show()
+
+sim.plot(output_variables=output_variables)
 
 print('Done')
