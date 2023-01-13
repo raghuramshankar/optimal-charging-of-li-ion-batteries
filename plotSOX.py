@@ -6,13 +6,13 @@ pybamm.set_logging_level("NOTICE")
 experiment = pybamm.Experiment(
     [
         (
-            "Discharge at C/5 for 10 hours or until 2.5 V",
+            "Discharge at 1C until 2.5 V",
             "Rest for 1 hour",
-            "Charge at 1 A until 4.2 V",
+            "Charge at 1C until 4.2 V",
             "Hold at 4.2 V until 10 mA",
             "Rest for 1 hour",
         ),
-    ]*10
+    ]
 )
 model = pybamm.lithium_ion.SPM(
     {
@@ -26,8 +26,10 @@ model = pybamm.lithium_ion.SPM(
 params = pybamm.ParameterValues("Chen2020")
 
 sim = pybamm.Simulation(
-    model, experiment=experiment, parameter_values=params, solver=pybamm.CasadiSolver(
-        "fast with events")
+    model,
+    experiment=experiment,
+    parameter_values=params,
+    solver=pybamm.CasadiSolver("fast with events"),
 )
 sim.solve()
 
@@ -35,8 +37,9 @@ sim.solve()
 output_variables = [
     "Current [A]",
     "Terminal voltage [V]",
-    "X-averaged positive particle concentration [mol.m-3]",
-    "Discharge capacity [A.h]"
+    "Discharge capacity [A.h]",
+    "Negative electrode potential [V]",
+    "Positive electrode potential [V]",
 ]
 
 # Plot OCV
@@ -54,11 +57,9 @@ print(cellCap)
 
 # Plot SOC
 posConcAvg = sim.solution["X-averaged positive particle concentration [mol.m-3]"].data
-posConcAvg = [np.mean(posConcAvg[:, i])
-              for i in range(np.shape(posConcAvg)[1])]
+posConcAvg = [np.mean(posConcAvg[:, i]) for i in range(np.shape(posConcAvg)[1])]
 negConcAvg = sim.solution["X-averaged negative particle concentration [mol.m-3]"].data
-negConcAvg = [np.mean(negConcAvg[:, i])
-              for i in range(np.shape(negConcAvg)[1])]
+negConcAvg = [np.mean(negConcAvg[:, i]) for i in range(np.shape(negConcAvg)[1])]
 
 posConcMax = params["Maximum concentration in positive electrode [mol.m-3]"]
 negConcMax = params["Maximum concentration in negative electrode [mol.m-3]"]
@@ -74,20 +75,22 @@ posStoicZero = max(posConc)
 negStoicZero = min(negConc)
 
 # socpos = (csavgpos/csmaxpos - y0)/(y100 - y0)
-cellSOCPos = (posConc - posStoicZero)/(posStoicHundred - posStoicZero)
+cellSOCPos = (posConc - posStoicZero) / (posStoicHundred - posStoicZero)
 # socneg = (csavgneg/csmaxneg - x0)/(x100 - x0)
-cellSOCNeg = (negConc - negStoicZero)/(negStoicHundred - negStoicZero)
+cellSOCNeg = (negConc - negStoicZero) / (negStoicHundred - negStoicZero)
 
 # socneg = (csavgneg - csminneg)/(csmaxneg - csminneg)
 # for Chen2020
 negConcMax = 29866
 negConcMin = 995
-socneg = np.subtract(negConcAvg, negConcMin)/(negConcMax - negConcMin)
+socneg = np.subtract(negConcAvg, negConcMin) / (negConcMax - negConcMin)
 
 plt.plot(socneg)
 plt.grid(True)
+
+
 # plt.show()
 
 sim.plot(output_variables=output_variables)
 
-print('Done')
+print("Done")
